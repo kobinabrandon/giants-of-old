@@ -2,11 +2,9 @@ use once_cell::sync::Lazy;
 use std::{fs, path::{Path, PathBuf}};
 
 
-pub static PARENT_DIR: Lazy<PathBuf> = Lazy::new(
-    || {
-        Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
-    }
-);
+pub static PARENT_DIR: Lazy<PathBuf> = Lazy::new(|| {
+    Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
+});
 
 pub static DATA_DIR: Lazy<PathBuf> = Lazy::new(|| {
     PARENT_DIR.join("data").to_path_buf()
@@ -45,7 +43,7 @@ pub static IMAGES_IN_DOWNLOADS: Lazy<PathBuf> = Lazy::new(|| {
 }); 
 
 
-pub fn make_fundamental_paths() {
+pub fn make_fundamental_directories() {
     let paths_to_create: Vec<&Path> = vec![
         IMAGES_DIR.as_path(),
         DATA_DIR.as_path(), 
@@ -59,7 +57,7 @@ pub fn make_fundamental_paths() {
 
     for path in paths_to_create {
         if !path.exists() {
-            let _ = fs::create_dir(path);
+             let _ = fs::create_dir_all(&path);
         }
-    }
+     }
 }
