@@ -1,63 +1,84 @@
-use once_cell::sync::Lazy;
-use std::{fs, path::{Path, PathBuf}};
+use log;
+use struct_iterable::Iterable; 
+use std::{fs, io::ErrorKind, path::PathBuf};
 
 
-pub static PARENT_DIR: Lazy<PathBuf> = Lazy::new(|| {
-    Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
-});
+#[derive(Iterable)]
+pub struct Directories {
+    pub data: PathBuf,
+    pub images: PathBuf,
+    pub models: PathBuf,
+    pub ocr_outputs: PathBuf,
+    pub pdfs_after_ocr: PathBuf,
+    pub txt_after_ocr: PathBuf,
+    pub chroma: PathBuf,
+    pub images_in_downloads: PathBuf
 
-pub static DATA_DIR: Lazy<PathBuf> = Lazy::new(|| {
-    PARENT_DIR.join("data").to_path_buf()
-}); 
+}
 
-pub static IMAGES_DIR: Lazy<PathBuf> = Lazy::new(|| {
-    PARENT_DIR.join("images").to_path_buf()
-}); 
 
-pub static OCR_OUTPUTS: Lazy<PathBuf> = Lazy::new(|| {
-    PARENT_DIR.join("OCR").to_path_buf()
-}); 
-
-pub static OCR_IMAGES: Lazy<PathBuf> = Lazy::new(|| {
-    OCR_OUTPUTS.join("images").to_path_buf()
-}); 
-
-pub static PDFS_AFTER_OCR: Lazy<PathBuf> = Lazy::new(|| {
-    OCR_OUTPUTS.join("pdf").to_path_buf()
-}); 
-
-pub static TXT_AFTER_OCR: Lazy<PathBuf> = Lazy::new(|| {
-    OCR_OUTPUTS.join("txt").to_path_buf()
-}); 
-
-pub static CHROMA_DIR: Lazy<PathBuf> = Lazy::new(|| {
-    PARENT_DIR.join("/.chroma").to_path_buf()
-}); 
-
-// pub static ARCHIVE_DIR: Lazy<PathBuf> = Lazy::new(|| {
-//     DATA_DIR.join("archive.json").to_path_buf()
-// }); 
-
-pub static IMAGES_IN_DOWNLOADS: Lazy<PathBuf> = Lazy::new(|| {
-    IMAGES_IN_DOWNLOADS.join("images_in_downloads").to_path_buf()
-}); 
+impl Directories {
+    pub fn setup() -> Self {
+        let parent = std::env::current_dir().expect("Failed to provide current directory");
+        let data: PathBuf = parent.join("data");
+        let images: PathBuf = parent.join("images");
+        let models: PathBuf = parent.join("models");
+        let chroma: PathBuf = parent.join("pdf").to_path_buf();
+        let ocr_outputs: PathBuf = parent.join("OCR").to_path_buf();
+        let pdfs_after_ocr: PathBuf = ocr_outputs.join("pdf").to_path_buf();
+        let txt_after_ocr: PathBuf = ocr_outputs.join("pdf").to_path_buf();
+        let images_in_downloads: PathBuf = images.join("images_in_downloads").to_path_buf();
+       
+        Self {
+            models, 
+            data, 
+            images, 
+            chroma,
+            ocr_outputs,
+            images_in_downloads,
+            txt_after_ocr,
+            pdfs_after_ocr
+        }
+    }
+}
 
 
 pub fn make_fundamental_directories() {
-    let paths_to_create: Vec<&Path> = vec![
-        IMAGES_DIR.as_path(),
-        DATA_DIR.as_path(), 
-        CHROMA_DIR.as_path(),
-        OCR_OUTPUTS.as_path(), 
-        OCR_IMAGES.as_path(), 
-        PDFS_AFTER_OCR.as_path(), 
-        TXT_AFTER_OCR.as_path(),
-        IMAGES_IN_DOWNLOADS.as_path(), 
-    ];
+   
+    log::info!("Creating Directories");
+    let mut directories_to_make: Vec<PathBuf> = Vec::new();
+    let all_directories = Directories::setup(); 
 
-    for path in paths_to_create {
-        if !path.exists() {
-             let _ = fs::create_dir_all(&path);
+    for field_tuple in all_directories.iter() {
+        if let Some(dir) = field_tuple.1.downcast_ref::<PathBuf>() { 
+            directories_to_make.push(dir.to_path_buf());
         }
-     }
+
+    } 
+
+    for dir in directories_to_make {
+        match fs::create_dir(&dir) {
+            Ok(_) => log::info!("Created {} directory: ", dir.to_str().unwrap()),
+            Err(e) => {
+                if e.kind() == ErrorKind::AlreadyExists {
+                    log::error!("Directory {} already exists", dir.display());
+                }
+                else {
+                    log::error!("Could not create directory {}", dir.display());
+                }
+            }
+        }
+    }
+
+    
+    
 }
+
+
+
+// pub static ARCHIVE: Lazy<PathBuf> = Lazy::new(|| {
+//     DATA.join("archive.json").to_path_buf()
+// }); 
+
+
+
