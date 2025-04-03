@@ -49,6 +49,7 @@ pub fn make_fundamental_directories() {
     let mut directories_to_make: Vec<PathBuf> = Vec::new();
     let all_directories = Directories::setup(); 
 
+    // Make sure we downcast the second 
     for field_tuple in all_directories.iter() {
         if let Some(dir) = field_tuple.1.downcast_ref::<PathBuf>() { 
             directories_to_make.push(dir.to_path_buf());
@@ -69,16 +70,5 @@ pub fn make_fundamental_directories() {
             }
         }
     }
-
-    
-    
 }
-
-
-
-// pub static ARCHIVE: Lazy<PathBuf> = Lazy::new(|| {
-//     DATA.join("archive.json").to_path_buf()
-// }); 
-
-
 
