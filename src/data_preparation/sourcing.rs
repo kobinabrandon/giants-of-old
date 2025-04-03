@@ -1,45 +1,46 @@
-use crate::setup::paths::{make_fundamental_directories, Directories};
-use std::{fs::{self, File}, io::{Bytes, ErrorKind, Write}, path::PathBuf};
-
 use log;
+use anyhow;
 use reqwest;
+use scraper::{self, Html, Selector};
+use std::{fs::File, io::Write, path::PathBuf};
+
+use crate::setup::paths::Directories;
+use crate::data_preparation::authors::prepare_sources;
 
 
 pub struct ViaHTTP {
-    title: String,
-    url: String, 
-    format: String, 
-    needs_ocr: bool, 
-    start_page: Option<i64>,
-    end_page: Option<i64>
+    pub title: String,
+    pub url: String, 
+    pub format: String, 
+    pub needs_ocr: bool, 
+    pub start_page: Option<i64>,
+    pub end_page: Option<i64>
 }
 
 
 impl ViaHTTP {
-    
-    fn make_file_name(self) -> String {
+
+    fn set_file_name(self) -> String {
         self.title.replace(" ", "_")
     }
 
     async fn download(self, file_path: &PathBuf) {
         if !file_path.exists() {
             log::info!("Downloading {}", self.title);
-
             let response = reqwest::get(self.url).await;
 
             match response {
                 Ok(response) => {
+                    // Runs if there is a response
                     if response.status().is_success() {
                         let bytes = response.bytes();
-                        let mut file = File::create(bytes); 
-                        file.write_all(&bytes);
+                        let file: Result<File, std::io::Error> = File::create(file_path); 
+                        _ = file.unwrap().write_all(&bytes.await.unwrap());
                     } 
                 } 
                 Err(e) => log::error!("Unable to download {}. Error: {}", self.title, e)
             }; 
         }
-
-
     }
     
 }
@@ -55,97 +56,63 @@ pub struct ViaScraper {
 
 impl ViaScraper {
 
-    fn make_file_name(self) -> String {
-        self.title.to_string() + "txt"
+    fn make_file_name(&self) -> String {
+        self.title.to_string() + ".txt"
     }
 
-    fn download(self, author_name: String) {
-        
+    async fn make_request(&self) -> Result<String, anyhow:: Error> { 
+        let html = reqwest::get(&self.url).await?.text().await?; 
+        Ok(html)
+    }
+
+    async fn scrape(&self) -> String { 
+        let html = self.make_request();
+        let mut scraped_text: String = String::new();
+        let document = Html::parse_document(&html.await.unwrap());
+        let paragraph_selector: &Selector = &scraper::Selector::parse("p").unwrap();
+
+        for element in document.select(paragraph_selector) {
+            let paragraph_text: String = element.text().collect();
+            scraped_text.push_str(&paragraph_text);
+            scraped_text.push_str("\n");
+        }
+
+        scraped_text
 
     }
-}
 
+    fn find_raw_data_for_author(&self, author_name: String) -> PathBuf {
 
-struct Author {
-    name: String, 
-    books_via_http: Option<Vec<ViaHTTP>>, 
-    books_via_scraper: Option<Vec<ViaScraper>>,
-    biographers_and_compilers: Option<Vec<String>>,
-    path_to_author_data: Option<PathBuf>
-}
-
-
-impl Author {
-
-    fn set_path_to_raw_data(self) -> PathBuf {
         let directories = Directories::setup();
-        directories.data.join("raw")
-    } 
+        let path = prepare_sources()
+            .iter()
+            .find(|author| author.name == author_name)
+            .map(|author| author.set_author_root(&directories))
+            .unwrap()
+            .to_path_buf();
 
-    fn set_author_root(self) -> PathBuf {
-        let directories = Directories::setup();
-        directories.data.join(self.name)
-    } 
-
-
-    fn get_file_paths(self) -> Vec<PathBuf> {
-
-        let path_to_raw_data = self.set_path_to_raw_data(); 
-
-        let files: Vec<PathBuf> = fs::read_dir(&path_to_raw_data)
-            .expect("Failed to read directory")
-            .filter_map(
-                |dir| {
-                    match dir {
-                        Ok(dir) => {
-                            let path = dir.path();
-                            if path.is_file() {
-                                Some(path) // Retail if this is a file 
-                            } else {
-                                None 
-                            }
-                        }
-
-                        Err(e) => {
-                            log::error!("Warning: Could not read file dir: {}", e);
-                            None // Ensures that 
-                        }
-                    }
-                }
-            ).collect(); 
-
-        files
+        path
     }
 
-    fn new(self) {
-       
-        
+    async fn download(&self, author_name: String) {
+        let file_name = self.make_file_name().to_string();
+        let destination_path = self.find_raw_data_for_author(author_name); 
+        let file_path: PathBuf = destination_path.join(&file_name);
 
+        if !file_path.exists() {
+            log::warn!("Attempting to scrape {}", self.title);
+            let scraped_text = self.scrape().await;
+            let file: Result<File, std::io::Error> = File::create(file_path);
+            _ = file.unwrap().write_all(scraped_text.as_bytes());
+        } else {
+            log::warn!("{} already exists at {}", file_name, file_path.display());
+        }
+    
+        
     }
 }
 
 
 
-
-
-
-
-
-
-
-
-// impl Default for ViaHTTP {
-//     fn default() -> Self {
-//         Self {
-//             title: None, 
-//             url: None, 
-//             format: String::from("pdf"),
-//             needs_ocr: false,
-//             start_page: None,
-//             end_page: None,
-//         }
-//     }
-// }
-//
 
 

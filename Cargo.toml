@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.97"
 log = "0.4.27"
 once_cell = "1.21.3"
 reqwest = "0.12.15"
