@@ -29,7 +29,7 @@ impl Directories {
         let data: PathBuf = parent.join("data");
         let images: PathBuf = parent.join("images");
         let models: PathBuf = parent.join("models");
-        let chroma: PathBuf = parent.join("pdf").to_path_buf();
+        let chroma: PathBuf = parent.join("chroma").to_path_buf();
         let ocr_outputs: PathBuf = parent.join("OCR").to_path_buf();
         let pdfs_after_ocr: PathBuf = ocr_outputs.join("pdf").to_path_buf();
         let txt_after_ocr: PathBuf = ocr_outputs.join("pdf").to_path_buf();

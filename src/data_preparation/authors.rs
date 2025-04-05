@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::PathBuf;
 
 use crate::setup::paths::Directories;
@@ -59,6 +60,7 @@ impl Author {
             let file_name: String = book.get_file_name();
             let path_to_raw_data: &PathBuf = &self.set_path_to_raw_data();
             let file_path = path_to_raw_data.join(file_name);
+            _ = fs::create_dir(&path_to_raw_data);
             book.clone().download(&file_path).await;
         }    
     }
@@ -113,7 +115,7 @@ pub fn prepare_sources() -> Vec<Author> {
                         start_page: Some(4), 
                         end_page: Some(202),
                         needs_ocr: false,
-                        format: String::from("pdf")
+                        format: String::from(".pdf")
                     },
 
                     ViaHTTP{
@@ -122,7 +124,7 @@ pub fn prepare_sources() -> Vec<Author> {
                         start_page: Some(7), 
                         end_page: Some(163),
                         needs_ocr: false,
-                        format: String::from("pdf")
+                        format: String::from(".pdf")
                     }, 
 
                     ViaHTTP{
@@ -131,7 +133,7 @@ pub fn prepare_sources() -> Vec<Author> {
                         start_page: Some(5), 
                         end_page: Some(237),
                         needs_ocr: false,
-                        format: String::from("pdf")
+                        format: String::from(".pdf")
                     },
 
                     ViaHTTP{
@@ -140,7 +142,7 @@ pub fn prepare_sources() -> Vec<Author> {
                         start_page: Some(3), 
                         end_page: Some(69),
                         needs_ocr: false,
-                        format: String::from("pdf")
+                        format: String::from(".pdf")
                     },
 
                     ViaHTTP{
@@ -149,7 +151,7 @@ pub fn prepare_sources() -> Vec<Author> {
                         start_page: Some(8), 
                         end_page: Some(71),
                         needs_ocr: false,
-                        format: String::from("pdf")
+                        format: String::from(".pdf")
                     },
 
                     ViaHTTP{
@@ -158,7 +160,7 @@ pub fn prepare_sources() -> Vec<Author> {
                         start_page: Some(7),
                         end_page: Some(26),
                         needs_ocr: false,
-                        format: String::from("pdf")
+                        format: String::from(".pdf")
                     },
 
                     ViaHTTP{
@@ -167,7 +169,7 @@ pub fn prepare_sources() -> Vec<Author> {
                         start_page: Some(2), 
                         end_page:Some(18),
                         needs_ocr: true,
-                        format: String::from("pdf")
+                        format: String::from(".pdf")
                     },
                 ]
             ),

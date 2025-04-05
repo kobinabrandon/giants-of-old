@@ -1,12 +1,10 @@
-// 
-// Learning Notes: The structs that I have created for each source needs to implement
+// Learning Note: The structs that I have created for each source needs to implement
 // the Clone trait because I will be dealing with a "level 2" aggregate type that will need 
 // to implement the trait. 
 
-
 use log;
 use scraper::{self, Html, Selector};
-use std::{fs::File, intrinsics::breakpoint, io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf};
 
 use crate::data_preparation::authors::prepare_sources;
 
@@ -26,7 +24,7 @@ pub struct ViaHTTP {
 impl ViaHTTP {
 
     pub fn get_file_name(&self) -> String {
-        self.title.replace(" ", "_")
+        self.title.replace(" ", "_").to_string() + &self.format
     }
 
     pub async fn download(self, file_path: &PathBuf) {
@@ -39,13 +37,11 @@ impl ViaHTTP {
                     let bytes = response.unwrap().bytes();
                     let file: Result<File, std::io::Error> = File::create(file_path); 
                     _ = file.unwrap().write_all(&bytes.await.unwrap());
+                    log::info!("Downloaded {}", self.title)
                 } 
                 _ => log::error!("Unable to download. Error: {}", self.title)
             }; 
         } 
-        else{
-            log::warn!("{} already exists", self.get_file_name())
-        }
     }
 }
 
@@ -106,9 +102,7 @@ impl ViaScraper {
             let scraped_text = self.scrape().await;
             let file: Result<File, std::io::Error> = File::create(file_path);
             _ = file.unwrap().write_all(scraped_text.as_bytes());
-        } else {
-            log::warn!("{} already exists at {}", file_name, file_path.display());
-        }
+        } 
     }
 }
 
