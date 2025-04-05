@@ -29,7 +29,7 @@ impl ViaHTTP {
 
     pub async fn download(self, file_path: &PathBuf) {
         if !file_path.exists() {
-            log::info!("Downloading {}", self.title);
+            log::debug!("Downloading {}", self.title);
             let response: Result<reqwest::Response, reqwest::Error> = reqwest::get(self.url).await;
 
             match response.as_ref().unwrap().status() {
@@ -39,7 +39,7 @@ impl ViaHTTP {
                     _ = file.unwrap().write_all(&bytes.await.unwrap());
                     log::info!("Downloaded {}", self.title)
                 } 
-                _ => log::error!("Unable to download. Error: {}", self.title)
+                _ => log::error!("Unable to download {}", self.title)
             }; 
         } 
     }
@@ -85,7 +85,7 @@ impl ViaScraper {
         let path = prepare_sources()
             .iter()
             .find(|author| author.name == author_name)
-            .map(|author| author.set_author_root())
+            .map(|author| author.set_path_to_raw_data())
             .unwrap()
             .to_path_buf();
 

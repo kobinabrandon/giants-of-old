@@ -69,8 +69,7 @@ pub fn make_fundamental_directories() {
             Err(e) => {
                 if e.kind() == ErrorKind::AlreadyExists {
                     log::error!("Directory {} already exists", dir.display());
-                }
-                else {
+                } else {
                     log::error!("Could not create directory {}", dir.display());
                 }
             }

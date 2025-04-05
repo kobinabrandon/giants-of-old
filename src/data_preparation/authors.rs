@@ -16,11 +16,9 @@ pub struct Author {
 impl Author {
 
     pub fn set_path_to_raw_data(&self) -> PathBuf {
-        Directories::get().data.join("raw")
-    } 
-
-    pub fn set_author_root(&self) -> PathBuf {
-        Directories::get().data.join(&self.name)
+        let author_root = Directories::get().data.join(&self.name);
+        _ = fs::create_dir(&author_root);
+        author_root.join("raw")
     } 
 
     // fn get_file_paths(self) -> Vec<PathBuf> {
