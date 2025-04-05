@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::PathBuf;
 
 use crate::setup::paths::Directories;
@@ -9,52 +8,93 @@ pub struct Author {
     pub name: String, 
     books_via_http: Option<Vec<ViaHTTP>>, 
     books_via_scraper: Option<Vec<ViaScraper>>,
-    biographers_and_compilers: Option<Vec<String>>,
+    // biographers_and_compilers: Option<Vec<String>>,
 }
 
 
 impl Author {
 
-    fn set_path_to_raw_data(&self, directories: &Directories) -> PathBuf {
-        directories.data.join("raw")
+    pub fn set_path_to_raw_data(&self) -> PathBuf {
+        Directories::get().data.join("raw")
     } 
 
-    pub fn set_author_root(&self, directories: &Directories) -> PathBuf {
-        directories.data.join(&self.name)
+    pub fn set_author_root(&self) -> PathBuf {
+        Directories::get().data.join(&self.name)
     } 
 
-    fn get_file_paths(self) -> Vec<PathBuf> {
+    // fn get_file_paths(self) -> Vec<PathBuf> {
+    //
+    //     let path_to_raw_data = self.set_path_to_raw_data(); 
+    //
+    //     let files: Vec<PathBuf> = fs::read_dir(&path_to_raw_data)
+    //         .expect("Failed to read directory")
+    //         .filter_map(
+    //             |dir| {
+    //                 match dir {
+    //                     Ok(dir) => {
+    //                         let path = dir.path();
+    //                         if path.is_file() {
+    //                             Some(path) // Retail if this is a file 
+    //                         } else {
+    //                             None 
+    //                         }
+    //                     }
+    //
+    //                     Err(e) => {
+    //                         log::error!("Warning: Could not read file dir: {}", e);
+    //                         None
+    //                     }
+    //                 }
+    //             }
+    //         )
+    //         .collect(); 
+    //
+    //     files
+    // }
 
-        let directories = Directories::setup();
-        let path_to_raw_data = self.set_path_to_raw_data(&directories); 
+    async fn download_via_http(&self) {
+        let http_books: Vec<ViaHTTP> = self.books_via_http.clone().unwrap();
 
-        let files: Vec<PathBuf> = fs::read_dir(&path_to_raw_data)
-            .expect("Failed to read directory")
-            .filter_map(
-                |dir| {
-                    match dir {
-                        Ok(dir) => {
-                            let path = dir.path();
-                            if path.is_file() {
-                                Some(path) // Retail if this is a file 
-                            } else {
-                                None 
-                            }
-                        }
-
-                        Err(e) => {
-                            log::error!("Warning: Could not read file dir: {}", e);
-                            None
-                        }
-                    }
-                }
-            )
-            .collect(); 
-
-        files
+        for book in http_books {
+            let file_name: String = book.get_file_name();
+            let path_to_raw_data: &PathBuf = &self.set_path_to_raw_data();
+            let file_path = path_to_raw_data.join(file_name);
+            book.clone().download(&file_path).await;
+        }    
     }
 
-    
+    async fn download_via_scraper(&self) {
+        let books_to_scrape: &Vec<ViaScraper> = &self.books_via_scraper.clone().unwrap();
+
+        for book in books_to_scrape {
+            book.clone().download(&self.name).await;
+        }    
+    }
+
+
+    pub async fn download_books(&self) {
+        let http_books: Option<Vec<ViaHTTP>> = self.books_via_http.clone();
+        let books_to_scrape: Option<Vec<ViaScraper>> = self.books_via_scraper.clone();
+
+        match (http_books, books_to_scrape) {
+            (Some(_http_books), Some(_books_to_scrape)) => {
+                self.download_via_http().await;
+                self.download_via_scraper().await;
+            }
+
+            (Some(_http_books), None) => {
+                self.download_via_http().await;
+            }
+
+            (None, Some(_books_to_scrape)) => {
+                self.download_via_scraper().await;
+            }
+            (None, None) => {
+                log::error!("{} has no books that can be acquired by HTTP request or scraping", self.name)
+            }
+
+        } 
+    }
 }
 
 
@@ -63,7 +103,7 @@ pub fn prepare_sources() -> Vec<Author> {
     let authors = vec![
         Author{
             name: String::from("Kwame Nkrumah"),
-            biographers_and_compilers: None,
+            // biographers_and_compilers: None,
             books_via_scraper: None,
             books_via_http: Some(
                 vec![

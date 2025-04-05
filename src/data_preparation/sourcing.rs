@@ -1,13 +1,18 @@
-use log;
-use anyhow;
-use reqwest;
-use scraper::{self, Html, Selector};
-use std::{fs::File, io::Write, path::PathBuf};
+// 
+// Learning Notes: The structs that I have created for each source needs to implement
+// the Clone trait because I will be dealing with a "level 2" aggregate type that will need 
+// to implement the trait. 
 
-use crate::setup::paths::Directories;
+
+use log;
+use scraper::{self, Html, Selector};
+use std::{fs::File, intrinsics::breakpoint, io::Write, path::PathBuf};
+
 use crate::data_preparation::authors::prepare_sources;
 
 
+#[derive(Clone)] 
+#[allow(dead_code)]
 pub struct ViaHTTP {
     pub title: String,
     pub url: String, 
@@ -20,43 +25,43 @@ pub struct ViaHTTP {
 
 impl ViaHTTP {
 
-    fn set_file_name(self) -> String {
+    pub fn get_file_name(&self) -> String {
         self.title.replace(" ", "_")
     }
 
-    async fn download(self, file_path: &PathBuf) {
+    pub async fn download(self, file_path: &PathBuf) {
         if !file_path.exists() {
             log::info!("Downloading {}", self.title);
-            let response = reqwest::get(self.url).await;
+            let response: Result<reqwest::Response, reqwest::Error> = reqwest::get(self.url).await;
 
-            match response {
-                Ok(response) => {
-                    // Runs if there is a response
-                    if response.status().is_success() {
-                        let bytes = response.bytes();
-                        let file: Result<File, std::io::Error> = File::create(file_path); 
-                        _ = file.unwrap().write_all(&bytes.await.unwrap());
-                    } 
+            match response.as_ref().unwrap().status() {
+                reqwest::StatusCode::OK => {
+                    let bytes = response.unwrap().bytes();
+                    let file: Result<File, std::io::Error> = File::create(file_path); 
+                    _ = file.unwrap().write_all(&bytes.await.unwrap());
                 } 
-                Err(e) => log::error!("Unable to download {}. Error: {}", self.title, e)
+                _ => log::error!("Unable to download. Error: {}", self.title)
             }; 
+        } 
+        else{
+            log::warn!("{} already exists", self.get_file_name())
         }
     }
-    
 }
 
 
+#[derive(Clone)]
 pub struct ViaScraper {
     title: String, 
     url: String,
-    is_interview: bool,
-    initial_marker: String, 
-    terminal_marker: String 
+    // is_interview: bool,
+    // initial_marker: String, 
+    // terminal_marker: String 
 }
 
 impl ViaScraper {
 
-    fn make_file_name(&self) -> String {
+    pub fn get_file_name(&self) -> String {
         self.title.to_string() + ".txt"
     }
 
@@ -76,27 +81,24 @@ impl ViaScraper {
             scraped_text.push_str(&paragraph_text);
             scraped_text.push_str("\n");
         }
-
         scraped_text
-
     }
 
     fn find_raw_data_for_author(&self, author_name: String) -> PathBuf {
 
-        let directories = Directories::setup();
         let path = prepare_sources()
             .iter()
             .find(|author| author.name == author_name)
-            .map(|author| author.set_author_root(&directories))
+            .map(|author| author.set_author_root())
             .unwrap()
             .to_path_buf();
 
         path
     }
 
-    async fn download(&self, author_name: String) {
-        let file_name = self.make_file_name().to_string();
-        let destination_path = self.find_raw_data_for_author(author_name); 
+    pub async fn download(&self, author_name: &String) {
+        let file_name = self.get_file_name().to_string();
+        let destination_path = self.find_raw_data_for_author(author_name.to_string()); 
         let file_path: PathBuf = destination_path.join(&file_name);
 
         if !file_path.exists() {
@@ -107,8 +109,6 @@ impl ViaScraper {
         } else {
             log::warn!("{} already exists at {}", file_name, file_path.display());
         }
-    
-        
     }
 }
 

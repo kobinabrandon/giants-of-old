@@ -18,6 +18,12 @@ pub struct Directories {
 
 
 impl Directories {
+
+    pub fn get() -> Directories {
+        let directories = Directories::setup();
+        directories
+    }
+
     pub fn setup() -> Self {
         let parent = std::env::current_dir().expect("Failed to provide current directory");
         let data: PathBuf = parent.join("data");
@@ -43,14 +49,14 @@ impl Directories {
 }
 
 
+
 pub fn make_fundamental_directories() {
    
     log::info!("Creating Directories");
     let mut directories_to_make: Vec<PathBuf> = Vec::new();
-    let all_directories = Directories::setup(); 
 
     // Make sure we downcast the second 
-    for field_tuple in all_directories.iter() {
+    for field_tuple in Directories::get().iter() {
         if let Some(dir) = field_tuple.1.downcast_ref::<PathBuf>() { 
             directories_to_make.push(dir.to_path_buf());
         }

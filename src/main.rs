@@ -1,4 +1,6 @@
+use data_preparation::authors::{self, prepare_sources};
 use setup::paths::make_fundamental_directories;
+use tokio;
 
 mod setup {
     pub mod paths; 
@@ -9,7 +11,9 @@ mod data_preparation {
     pub mod authors;
 }
 
-
-fn main() {
+#[tokio::main]
+async fn main() {
     make_fundamental_directories();
+    let all_authors = prepare_sources();
+    authors::Author::download_books(&all_authors[0]).await;
 }
