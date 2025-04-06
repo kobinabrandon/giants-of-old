@@ -13,7 +13,6 @@ pub struct Directories {
     pub txt_after_ocr: PathBuf,
     pub chroma: PathBuf,
     pub images_in_downloads: PathBuf
-
 }
 
 
@@ -52,7 +51,6 @@ impl Directories {
 
 pub fn make_fundamental_directories() {
    
-    log::info!("Creating Directories");
     let mut directories_to_make: Vec<PathBuf> = Vec::new();
 
     // Make sure we downcast the second 
@@ -68,7 +66,7 @@ pub fn make_fundamental_directories() {
             Ok(_) => log::info!("Created {} directory: ", dir.to_str().unwrap()),
             Err(e) => {
                 if e.kind() == ErrorKind::AlreadyExists {
-                    log::error!("Directory {} already exists", dir.display());
+                    continue
                 } else {
                     log::error!("Could not create directory {}", dir.display());
                 }

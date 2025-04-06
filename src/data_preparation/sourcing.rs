@@ -6,11 +6,13 @@ use log;
 use scraper::{self, Html, Selector};
 use std::{fs::File, io::Write, path::PathBuf};
 
+use crate::setup::paths::make_fundamental_directories;
 use crate::data_preparation::authors::prepare_sources;
 
 
-#[derive(Clone)] 
+
 #[allow(dead_code)]
+#[derive(Clone, Default)] 
 pub struct ViaHTTP {
     pub title: String,
     pub url: String, 
@@ -29,7 +31,7 @@ impl ViaHTTP {
 
     pub async fn download(self, file_path: &PathBuf) {
         if !file_path.exists() {
-            log::debug!("Downloading {}", self.title);
+            log::info!("Downloading {}", self.title);
             let response: Result<reqwest::Response, reqwest::Error> = reqwest::get(self.url).await;
 
             match response.as_ref().unwrap().status() {
@@ -37,7 +39,7 @@ impl ViaHTTP {
                     let bytes = response.unwrap().bytes();
                     let file: Result<File, std::io::Error> = File::create(file_path); 
                     _ = file.unwrap().write_all(&bytes.await.unwrap());
-                    log::info!("Downloaded {}", self.title)
+                    log::info!("Downloaded")
                 } 
                 _ => log::error!("Unable to download {}", self.title)
             }; 
@@ -46,19 +48,23 @@ impl ViaHTTP {
 }
 
 
-#[derive(Clone)]
+
+#[allow(dead_code)]
+#[derive(Clone, Default)]
 pub struct ViaScraper {
-    title: String, 
-    url: String,
-    // is_interview: bool,
-    // initial_marker: String, 
-    // terminal_marker: String 
+    pub title: String, 
+    pub url: String,
+    pub format: String,
+    pub is_interview: bool,
+    pub initial_marker: Option<String>, 
+    pub terminal_marker: Option<String> 
 }
+
 
 impl ViaScraper {
 
     pub fn get_file_name(&self) -> String {
-        self.title.to_string() + ".txt"
+        self.title.replace(" ", "_").to_string() + &self.format
     }
 
     async fn make_request(&self) -> Result<String, anyhow:: Error> { 
@@ -107,6 +113,12 @@ impl ViaScraper {
 }
 
 
+pub async fn download_all_texts() {
+    
+    make_fundamental_directories();
+    for author in prepare_sources() {
+        author.download_books().await;
+    }
 
-
+}
 

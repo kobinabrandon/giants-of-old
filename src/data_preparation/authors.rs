@@ -5,11 +5,13 @@ use crate::setup::paths::Directories;
 use crate::data_preparation::sourcing::{ViaScraper, ViaHTTP};
 
 
+#[derive(Default)]
+#[allow(dead_code)]
 pub struct Author {
     pub name: String, 
-    books_via_http: Option<Vec<ViaHTTP>>, 
-    books_via_scraper: Option<Vec<ViaScraper>>,
-    // biographers_and_compilers: Option<Vec<String>>,
+    pub books_via_http: Option<Vec<ViaHTTP>>, 
+    pub books_via_scraper: Option<Vec<ViaScraper>>,
+    pub biographers_and_compilers: Option<Vec<String>>,
 }
 
 
@@ -101,80 +103,144 @@ impl Author {
 pub fn prepare_sources() -> Vec<Author> {
 
     let authors = vec![
+
         Author{
-            name: String::from("Kwame Nkrumah"),
-            // biographers_and_compilers: None,
-            books_via_scraper: None,
+            name: String::from("Karl Marx"),
             books_via_http: Some(
                 vec![
                     ViaHTTP{
-                        title: String::from("Neo-Colonialism, the Last Stage of imperialism"), 
-                        url: String::from("https://www.marxists.org/ebooks/nkrumah/nkrumah-neocolonialism.pdf"), 
-                        start_page: Some(4), 
-                        end_page: Some(202),
-                        needs_ocr: false,
-                        format: String::from(".pdf")
+                        title: String::from("Capital Vol I"),
+                        url: String::from("https://www.marxists.org/archive/marx/works/download/pdf/Capital-Volume-I.pdf"),
+                        ..ViaHTTP::default()
                     },
 
                     ViaHTTP{
-                        title: String::from("Dark Days in Ghana"),
-                        url: String::from("https://www.marxists.org/subject/africa/nkrumah/1968/dark-days.pdf"),
-                        start_page: Some(7), 
-                        end_page: Some(163),
-                        needs_ocr: false,
-                        format: String::from(".pdf")
-                    }, 
-
-                    ViaHTTP{
-                        title: String::from("Africa Must Unite"),
-                        url: String::from("https://www.marxists.org/subject/africa/nkrumah/1963/africa-must-unite.pdf"),
-                        start_page: Some(5), 
-                        end_page: Some(237),
-                        needs_ocr: false,
-                        format: String::from(".pdf")
+                        title: String::from("Capital Vol II"),
+                        url: String::from("https://www.marxists.org/archive/marx/works/download/pdf/Capital-Volume-II.pdf"),
+                        ..ViaHTTP::default()
                     },
 
                     ViaHTTP{
-                        title: String::from("Class Struggle In Africa"),
-                        url: String::from("https://ia601208.us.archive.org/22/items/class-struggle-in-africa/Class%20Struggle%20in%20Africa_text.pdf"),
-                        start_page: Some(3), 
-                        end_page: Some(69),
-                        needs_ocr: false,
-                        format: String::from(".pdf")
+                        title: String::from("Capital Vol III"),
+                        url: String::from("https://www.marxists.org/archive/marx/works/download/pdf/Capital-Volume-III.pdf"),
+                        ..ViaHTTP::default()
                     },
 
                     ViaHTTP{
-                        title: String::from("Handbook of Revolutionary Warefare: A Guide to the Armed Phase of the African Revolution"),
-                        url: String::from("http://www.itsuandi.org/itsui/downloads/Itsui_Materials/handbook-of-revolutionary-warfare-a-guide-to-the-armed-phase-of-the-african-revolution.pdf"),
-                        start_page: Some(8), 
-                        end_page: Some(71),
-                        needs_ocr: false,
-                        format: String::from(".pdf")
+                        title: String::from("Value, Price & Profit"),
+                        url: String::from("https://www.marxists.org/archive/marx/works/download/pdf/value-price-profit.pdf"),
+                        ..ViaHTTP::default()
                     },
 
                     ViaHTTP{
-                        title: String::from("Revolutionary Path"), 
-                        url: String::from("https://www.sahistory.org.za/file/426894/download?token=t2k1HcFY"),
-                        start_page: Some(7),
-                        end_page: Some(26),
-                        needs_ocr: false,
-                        format: String::from(".pdf")
+                        title: String::from("Wage, Labour & Capital"),
+                        url: String::from("https://www.marxists.org/archive/marx/works/download/pdf/wage-labour-capital.pdf"),
+                        ..ViaHTTP::default()
                     },
 
                     ViaHTTP{
-                        title: String::from("Ghana's Policy at Home and Abroad"), 
-                        url: String::from("https://www.marxists.org/subject/africa/nkrumah/1957/ghanas-policy.pdf"),
-                        start_page: Some(2), 
-                        end_page:Some(18),
-                        needs_ocr: true,
-                        format: String::from(".pdf")
+                        title: String::from("The Communist Manifesto"),
+                        url: String::from("https://www.marxists.org/archive/marx/works/download/pdf/Manifesto.pdf"),
+                        start_page: Some(13),
+                        end_page: Some(66),
+                        ..ViaHTTP::default()
                     },
                 ]
             ),
-        }
-    ];
-    
-    authors
+            ..Author::default()
+        },
 
+        Author{
+            name: String::from("Mao Zedong"),
+            books_via_scraper: Some(
+                vec![
+                    ViaScraper{
+                        title: String::from("Combat Liberalism"),
+                        url: String::from("https://www.marxists.org/reference/archive/mao/selected-works/volume-2/mswv2_03.htm"),
+                        initial_marker: Some(String::from("We stand for")),
+                        terminal_marker: Some(String::from("Transcription")),
+                        ..ViaScraper::default()
+                    }
+                ],
+            ),
+            books_via_http: Some(
+                vec![
+                    ViaHTTP{
+                        title: String::from("Oppose Book Worship"),
+                        url: String::from("https://www.marxists.org/ebooks/mao/Oppose_Book_Worship_-_Mao_Zedong.pdf"),
+                        start_page: Some(2),
+                        end_page: Some(12),
+                        format: String::from(".pdf"),
+                        ..ViaHTTP::default()
+                    },
+
+                    ViaHTTP{
+                        title: String::from("Selected Works of Mao Tse-Tung Volume I"),
+                        url: String::from("https://www.marxists.org/reference/archive/mao/selected-works/sw-in-pdf/sw-flp-1965-v1.pdf"),
+                        format: String::from(".pdf"),
+                        start_page: Some(20),
+                        end_page: Some(353),
+                        ..ViaHTTP::default()
+                    },
+
+                    ViaHTTP{
+                        title: String::from("Selected Works of Mao Tse-Tung Volume II"),
+                        url: String::from("https://www.marxists.org/reference/archive/mao/selected-works/sw-in-pdf/sw-flp-1965-v2.pdf"),
+                        start_page: Some(18),
+                        end_page: Some(473),
+                        format: String::from(".pdf"),
+                        ..ViaHTTP::default()
+                    },
+
+                    ViaHTTP{
+                        title: String::from("Selected Works of Mao Tse-Tung Volume III"),
+                        url: String::from("https://www.marxists.org/reference/archive/mao/selected-works/sw-in-pdf/sw-flp-1965-v3.pdf"),
+                        start_page: Some(16),
+                        end_page: Some(345),
+                        format: String::from(".pdf"),
+                        ..ViaHTTP::default()
+                    },
+
+                    ViaHTTP{
+                        title: String::from("Selected Works of Mao Tse-Tung Volume IV"),
+                        url: String::from("https://www.marxists.org/reference/archive/mao/selected-works/sw-in-pdf/sw-flp-1965-v4.pdf"),
+                        start_page: Some(17),
+                        end_page: Some(463),
+                        format: String::from(".pdf"),
+                        ..ViaHTTP::default()
+                    },
+
+                    ViaHTTP{
+                        title: String::from("Selected Works of Mao Tse-Tung Volume V"),
+                        url: String::from("https://www.marxists.org/reference/archive/mao/selected-works/sw-in-pdf/sw-flp-1971-v5.pdf"),
+                        start_page: Some(22),
+                        end_page: Some(524),
+                        format: String::from(".pdf"),
+                        ..ViaHTTP::default()
+                    }
+                ]
+            ),
+            ..Author::default()
+        },
+
+        Author{
+            name: String::from("Marcus Garvey"),
+            books_via_http: Some(
+                vec![
+                    ViaHTTP{
+                        title: String::from("The Philosophy & Opinions of Marcus Garvey"),
+                        url: String::from("https://www.jpanafrican.org/ebooks/eBook%20Phil%20and%20Opinions.pdf"),
+                        start_page: Some(3),
+                        end_page: Some(62),
+                        format: String::from(".pdf"),
+                        ..ViaHTTP::default()
+
+                    },
+                ]
+            ),
+            ..Author::default()
+        } 
+    ]; 
+    authors
 }
 

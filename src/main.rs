@@ -1,9 +1,11 @@
-use data_preparation::authors::{self, prepare_sources};
-use setup::paths::make_fundamental_directories;
 use tokio;
+
+use setup::logging::setup_logging;
+use data_preparation::sourcing::download_all_texts;
 
 mod setup {
     pub mod paths; 
+    pub mod logging; 
 }
 
 mod data_preparation {
@@ -13,8 +15,6 @@ mod data_preparation {
 
 #[tokio::main]
 async fn main() {
-    env_logger::init(); 
-    make_fundamental_directories();
-    let all_authors = prepare_sources();
-    authors::Author::download_books(&all_authors[0]).await;
+    setup_logging();
+    download_all_texts().await
 }
