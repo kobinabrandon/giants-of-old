@@ -38,7 +38,7 @@ impl Author {
     //                     Ok(dir) => {
     //                         let path = dir.path();
     //                         if path.is_file() {
-    //                             Some(path) // Retail if this is a file 
+    //                             Some(path) // Return if this is a file 
     //                         } else {
     //                             None 
     //                         }
@@ -294,7 +294,9 @@ pub fn prepare_sources() -> Vec<Author> {
 
         Author{
             name: String::from("Helena Pretrovna Blavatsky"),
-            biographers_and_compilers: Some(vec!["Marion Meade".to_string(), "Gary Lachman".to_string()]),
+            biographers_and_compilers: Some(
+                vec!["Marion Meade".to_string(), "Gary Lachman".to_string()]
+            ),
             books_via_torrent: Some(
                 vec![
                     ViaTorrent{
