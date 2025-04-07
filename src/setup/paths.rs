@@ -53,7 +53,7 @@ pub fn make_fundamental_directories() {
    
     let mut directories_to_make: Vec<PathBuf> = Vec::new();
 
-    // Make sure we downcast the second 
+    // Make sure we downcast the second element of the tuple 
     for field_tuple in Directories::get().iter() {
         if let Some(dir) = field_tuple.1.downcast_ref::<PathBuf>() { 
             directories_to_make.push(dir.to_path_buf());

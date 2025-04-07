@@ -1,52 +1,9 @@
-// Learning Note: The structs that I have created for each source needs to implement
-// the Clone trait because I will be dealing with a "level 2" aggregate type that will need 
-// to implement the trait. 
-
 use log;
 use scraper::{self, Html, Selector};
+
 use std::{fs::File, io::Write, path::PathBuf};
 
-use crate::setup::paths::make_fundamental_directories;
-use crate::data_preparation::authors::prepare_sources;
-
-
-
-#[allow(dead_code)]
-#[derive(Clone, Default)] 
-pub struct ViaHTTP {
-    pub title: String,
-    pub url: String, 
-    pub format: String, 
-    pub needs_ocr: bool, 
-    pub start_page: Option<i64>,
-    pub end_page: Option<i64>
-}
-
-
-impl ViaHTTP {
-
-    pub fn get_file_name(&self) -> String {
-        self.title.replace(" ", "_").to_string() + &self.format
-    }
-
-    pub async fn download(self, file_path: &PathBuf) {
-        if !file_path.exists() {
-            log::info!("Downloading {}", self.title);
-            let response: Result<reqwest::Response, reqwest::Error> = reqwest::get(self.url).await;
-
-            match response.as_ref().unwrap().status() {
-                reqwest::StatusCode::OK => {
-                    let bytes = response.unwrap().bytes();
-                    let file: Result<File, std::io::Error> = File::create(file_path); 
-                    _ = file.unwrap().write_all(&bytes.await.unwrap());
-                    log::info!("Downloaded")
-                } 
-                _ => log::error!("Unable to download {}", self.title)
-            }; 
-        } 
-    }
-}
-
+use crate::sources::authors::prepare_sources;
 
 
 #[allow(dead_code)]
@@ -110,15 +67,5 @@ impl ViaScraper {
             _ = file.unwrap().write_all(scraped_text.as_bytes());
         } 
     }
-}
-
-
-pub async fn download_all_texts() {
-    
-    make_fundamental_directories();
-    for author in prepare_sources() {
-        author.download_books().await;
-    }
-
 }
 

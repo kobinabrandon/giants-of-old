@@ -2,7 +2,9 @@ use std::fs;
 use std::path::PathBuf;
 
 use crate::setup::paths::Directories;
-use crate::data_preparation::sourcing::{ViaScraper, ViaHTTP};
+use crate::sources::http::ViaHTTP;
+use crate::sources::scraping::ViaScraper;
+use crate::sources::torrents::ViaTorrent;
 
 
 #[derive(Default)]
@@ -11,6 +13,7 @@ pub struct Author {
     pub name: String, 
     pub books_via_http: Option<Vec<ViaHTTP>>, 
     pub books_via_scraper: Option<Vec<ViaScraper>>,
+    pub books_via_torrent: Option<Vec<ViaTorrent>>,
     pub biographers_and_compilers: Option<Vec<String>>,
 }
 
@@ -54,6 +57,7 @@ impl Author {
     // }
 
     async fn download_via_http(&self) {
+
         let http_books: Vec<ViaHTTP> = self.books_via_http.clone().unwrap();
 
         for book in http_books {
@@ -73,28 +77,57 @@ impl Author {
         }    
     }
 
+    async fn download_via_torrent(&self) {
+        let books_to_torrent: &Vec<ViaTorrent> = &self.books_via_torrent.clone().unwrap();
+        for book in books_to_torrent {
+            book.clone().download(self.set_path_to_raw_data()).await;
+        }    
+    }
 
     pub async fn download_books(&self) {
         let http_books: Option<Vec<ViaHTTP>> = self.books_via_http.clone();
         let books_to_scrape: Option<Vec<ViaScraper>> = self.books_via_scraper.clone();
+        let books_to_torrent: Option<Vec<ViaTorrent>> = self.books_via_torrent.clone();
 
-        match (http_books, books_to_scrape) {
-            (Some(_http_books), Some(_books_to_scrape)) => {
+        log::info!("Downloading {}'s texts", &self.name);
+        match (http_books, books_to_scrape, books_to_torrent) {
+
+            (None, None, None) => {
+                log::error!("{} has no books that can be acquired by HTTP, scraping, or torrenting", &self.name)
+            },
+
+            (Some(_http_books), None, None) => {
+                self.download_via_http().await;
+            },
+
+            (None, Some(_books_to_scrape), None) => {
+                self.download_via_scraper().await;
+            },
+
+            (None, None, Some(_books_to_torrent)) => {
+                self.download_via_torrent().await;
+            },
+
+            (Some(_http_books), Some(_books_to_scrape), None) => {
                 self.download_via_http().await;
                 self.download_via_scraper().await;
-            }
+            },
 
-            (Some(_http_books), None) => {
-                self.download_via_http().await;
-            }
-
-            (None, Some(_books_to_scrape)) => {
+            (None, Some(_books_to_scrape), Some(_books_to_torrent)) => {
                 self.download_via_scraper().await;
-            }
-            (None, None) => {
-                log::error!("{} has no books that can be acquired by HTTP request or scraping", self.name)
-            }
+                self.download_via_torrent().await;
+            },
 
+            (Some(_http_books), None, Some(_books_to_torrent)) => {
+                self.download_via_http().await;
+                self.download_via_scraper().await;
+            },
+
+            (Some(_http_books), Some(_books_to_scrape), Some(_books_to_torrent)) => {
+                self.download_via_http().await;
+                self.download_via_scraper().await;
+                self.download_via_torrent().await;
+            }
         } 
     }
 }
@@ -239,8 +272,42 @@ pub fn prepare_sources() -> Vec<Author> {
                 ]
             ),
             ..Author::default()
-        } 
+        },
+
+        Author{
+            name: String::from("Swami Vivekananda"),
+            biographers_and_compilers: None, 
+            books_via_http: Some(
+                vec![
+                    ViaHTTP{
+                        title: String::from("The Complete Works of Swami Vivekananda"),
+                        url: String::from("https://ia801608.us.archive.org/9/items/complete-works-of-swami-vivekananda-all-volumes-swami-vivekananda/Complete%20Works%20of%20Swami%20Vivekananda%20-%20%20All%20Volumes%20-%20Swami%20Vivekananda.pdf"),
+                        start_page: Some(81),
+                        end_page: Some(5162),
+                        format: String::from("pdf"),
+                        ..ViaHTTP::default()
+                    }
+                ]
+            ),
+            ..Author::default()
+        },
+
+        Author{
+            name: String::from("Helena Pretrovna Blavatsky"),
+            biographers_and_compilers: Some(vec!["Marion Meade".to_string(), "Gary Lachman".to_string()]),
+            books_via_torrent: Some(
+                vec![
+                    ViaTorrent{
+                        magnet: String::from("magnet:?xt=urn:btih:7933F8B90EAC4CBCCEED1667B5E5FF0C7E5F9B29&dn=H.%20P.%20Blavatsky%20-%20Collected%20Writings%20and%20More%20%5Bepub%20mobi%20pdf%5D&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.bittor.pw%3A1337%2Fannounce&tr=udp%3A%2F%2Fpublic.popcorn-tracker.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce")
+                    }
+                ]
+            ), 
+            ..Author::default()
+        },
+
+
     ]; 
+
     authors
 }
 
