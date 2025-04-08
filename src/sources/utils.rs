@@ -15,3 +15,12 @@ pub fn find_raw_data_for_author(author_name: String) -> PathBuf {
 }
 
 
+pub fn get_author_root(author_name: &str) -> PathBuf {
+    let author_root: PathBuf = find_raw_data_for_author(author_name.to_string()).parent()
+            .expect("Author path is invalid")
+            .to_path_buf();
+
+    author_root
+
+}
+

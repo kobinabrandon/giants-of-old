@@ -44,9 +44,10 @@ impl ViaScraper {
     }
 
     pub async fn download(&self, author_name: &String) {
+        log::info!("Downloading {}", self.title);
         let file_name = self.get_file_name().to_string();
-        let destination_path = utils::find_raw_data_for_author(author_name.to_string()); 
-        let file_path: PathBuf = destination_path.join(&file_name);
+        let author_root = utils::get_author_root(&author_name);
+        let file_path: PathBuf = author_root.join(&file_name);
 
         if !file_path.exists() {
             log::warn!("Attempting to scrape {}", self.title);

@@ -9,11 +9,11 @@ mod setup {
 }
 
 mod sources {
-    pub mod http;
     pub mod scraping;
     pub mod torrents;
     pub mod authors;
     pub mod utils;
+    pub mod http;
 }
 
 mod data_preparation{

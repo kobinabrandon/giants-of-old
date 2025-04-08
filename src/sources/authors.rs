@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
+use crate::sources::utils;
 use crate::sources::http::ViaHTTP;
 use crate::setup::paths::Directories;
 use crate::sources::scraping::ViaScraper;
@@ -26,45 +27,45 @@ impl Author {
         author_data_root.join("raw")
     } 
 
-    pub fn get_file_paths(self) -> Vec<PathBuf> {
-
-        let path_to_raw_data = self.set_path_to_raw_data(); 
-
-        let files: Vec<PathBuf> = fs::read_dir(&path_to_raw_data)
-            .expect("Failed to read directory")
-            .filter_map(
-                |dir| {
-                    match dir {
-                        Ok(dir) => {
-                            let path = dir.path();
-                            if path.is_file() {
-                                Some(path) // Return if this is a file 
-                            } else {
-                                None // I'm not willing to assume that the directory will only ever contain files
-                            }
-                        }
-
-                        Err(e) => {
-                            log::error!("Warning: Could not read file dir: {}", e);
-                            None
-                        }
-                    }
-                }
-            )
-            .collect(); 
-
-        files
-    }
-
+    // pub fn get_file_paths(self) -> Vec<PathBuf> {
+    //
+    //     let path_to_raw_data = self.set_path_to_raw_data(); 
+    //
+    //     let files: Vec<PathBuf> = fs::read_dir(&path_to_raw_data)
+    //         .expect("Failed to read directory")
+    //         .filter_map(
+    //             |dir| {
+    //                 match dir {
+    //                     Ok(dir) => {
+    //                         let path = dir.path();
+    //                         if path.is_file() {
+    //                             Some(path) // Return if this is a file 
+    //                         } else {
+    //                             None // I'm not willing to assume that the directory will only ever contain files
+    //                         }
+    //                     }
+    //
+    //                     Err(e) => {
+    //                         log::error!("Warning: Could not read file dir: {}", e);
+    //                         None
+    //                     }
+    //                 }
+    //             }
+    //         )
+    //         .collect(); 
+    //
+    //     files
+    // }
+    
     async fn download_via_http(&self) {
 
         let http_books: Vec<ViaHTTP> = self.books_via_http.clone().unwrap();
 
         for book in http_books {
             let file_name: String = book.get_file_name();
-            let path_to_raw_data: &PathBuf = &self.set_path_to_raw_data();
-            let file_path = path_to_raw_data.join(file_name);
-            _ = fs::create_dir(&path_to_raw_data);
+            let author_root: PathBuf = utils::get_author_root(&self.name); 
+            let file_path = author_root.join(file_name);
+            _ = fs::create_dir(&author_root);
             book.clone().download(&file_path).await;
         }    
     }
@@ -80,10 +81,9 @@ impl Author {
     async fn download_via_torrent(&self) {
         let books_to_torrent: &Vec<ViaTorrent> = &self.books_via_torrent.clone().unwrap();
         for book in books_to_torrent {
-            let download_path = self.set_path_to_raw_data();
+            let download_path = utils::get_author_root(&self.name);
             book.download(download_path.clone()).await;
             book.extract_files(download_path, &self.name);
-
         }    
     }
 
@@ -92,7 +92,7 @@ impl Author {
         let books_to_scrape: Option<Vec<ViaScraper>> = self.books_via_scraper.clone();
         let books_to_torrent: Option<Vec<ViaTorrent>> = self.books_via_torrent.clone();
 
-        log::info!("Downloading {}'s texts", &self.name);
+        log::warn!("Downloading {}'s texts", &self.name);
         match (http_books, books_to_scrape, books_to_torrent) {
 
             (None, None, None) => {
@@ -130,6 +130,7 @@ impl Author {
                 self.download_via_http().await;
                 self.download_via_scraper().await;
                 self.download_via_torrent().await;
+
             }
         } 
     }
@@ -295,20 +296,35 @@ pub fn prepare_sources() -> Vec<Author> {
             ..Author::default()
         },
 
-        Author{
-            name: String::from("Helena Pretrovna Blavatsky"),
-            biographers_and_compilers: Some(
-                vec!["Marion Meade".to_string(), "Gary Lachman".to_string()]
-            ),
+        // Author{
+        //     name: String::from("Helena Pretrovna Blavatsky"),
+        //     biographers_and_compilers: Some(
+        //         vec!["Marion Meade".to_string(), "Gary Lachman".to_string()]
+        //     ),
+        //     books_via_torrent: Some(
+        //         vec![
+        //             ViaTorrent{
+        //                 magnet: String::from("magnet:?xt=urn:btih:7933F8B90EAC4CBCCEED1667B5E5FF0C7E5F9B29&dn=H.%20P.%20Blavatsky%20-%20Collected%20Writings%20and%20More%20%5Bepub%20mobi%20pdf%5D&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.bittor.pw%3A1337%2Fannounce&tr=udp%3A%2F%2Fpublic.popcorn-tracker.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce")
+        //             }
+        //
+        //         ]
+        //     ), 
+        //     ..Author::default()
+        // },
+        //
+       Author{
+            name: String::from("Plato"),
             books_via_torrent: Some(
                 vec![
                     ViaTorrent{
-                        magnet: String::from("magnet:?xt=urn:btih:7933F8B90EAC4CBCCEED1667B5E5FF0C7E5F9B29&dn=H.%20P.%20Blavatsky%20-%20Collected%20Writings%20and%20More%20%5Bepub%20mobi%20pdf%5D&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.bittor.pw%3A1337%2Fannounce&tr=udp%3A%2F%2Fpublic.popcorn-tracker.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce")
+                        magnet: String::from("magnet:?xt=urn:btih:0D25C216E5B606BCF2B7732688A9D1EBDF6997C5&dn=Plato%20-%20Complete%20Works%20(Hackett%20Pub.)%20(retail%20epub%2C%20mobi)&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.bittor.pw%3A1337%2Fannounce&tr=udp%3A%2F%2Fpublic.popcorn-tracker.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce")
                     }
+
                 ]
             ), 
             ..Author::default()
         },
+
 
 
     ]; 
