@@ -3,7 +3,7 @@ use scraper::{self, Html, Selector};
 
 use std::{fs::File, io::Write, path::PathBuf};
 
-use crate::sources::authors::prepare_sources;
+use crate::sources::utils;
 
 
 #[allow(dead_code)]
@@ -43,21 +43,9 @@ impl ViaScraper {
         scraped_text
     }
 
-    fn find_raw_data_for_author(&self, author_name: String) -> PathBuf {
-
-        let path = prepare_sources()
-            .iter()
-            .find(|author| author.name == author_name)
-            .map(|author| author.set_path_to_raw_data())
-            .unwrap()
-            .to_path_buf();
-
-        path
-    }
-
     pub async fn download(&self, author_name: &String) {
         let file_name = self.get_file_name().to_string();
-        let destination_path = self.find_raw_data_for_author(author_name.to_string()); 
+        let destination_path = utils::find_raw_data_for_author(author_name.to_string()); 
         let file_path: PathBuf = destination_path.join(&file_name);
 
         if !file_path.exists() {

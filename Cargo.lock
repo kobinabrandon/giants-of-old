@@ -755,6 +755,7 @@ dependencies = [
  "log",
  "reqwest",
  "scraper",
+ "serde_json",
  "struct_iterable",
  "tokio",
 ]

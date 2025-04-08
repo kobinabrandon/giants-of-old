@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::PathBuf;
 
-use crate::setup::paths::Directories;
 use crate::sources::http::ViaHTTP;
+use crate::setup::paths::Directories;
 use crate::sources::scraping::ViaScraper;
 use crate::sources::torrents::ViaTorrent;
 
@@ -21,40 +21,40 @@ pub struct Author {
 impl Author {
 
     pub fn set_path_to_raw_data(&self) -> PathBuf {
-        let author_root = Directories::get().data.join(&self.name);
-        _ = fs::create_dir(&author_root);
-        author_root.join("raw")
+        let author_data_root = Directories::get().data.join(&self.name);
+        _ = fs::create_dir(&author_data_root);
+        author_data_root.join("raw")
     } 
 
-    // fn get_file_paths(self) -> Vec<PathBuf> {
-    //
-    //     let path_to_raw_data = self.set_path_to_raw_data(); 
-    //
-    //     let files: Vec<PathBuf> = fs::read_dir(&path_to_raw_data)
-    //         .expect("Failed to read directory")
-    //         .filter_map(
-    //             |dir| {
-    //                 match dir {
-    //                     Ok(dir) => {
-    //                         let path = dir.path();
-    //                         if path.is_file() {
-    //                             Some(path) // Return if this is a file 
-    //                         } else {
-    //                             None 
-    //                         }
-    //                     }
-    //
-    //                     Err(e) => {
-    //                         log::error!("Warning: Could not read file dir: {}", e);
-    //                         None
-    //                     }
-    //                 }
-    //             }
-    //         )
-    //         .collect(); 
-    //
-    //     files
-    // }
+    pub fn get_file_paths(self) -> Vec<PathBuf> {
+
+        let path_to_raw_data = self.set_path_to_raw_data(); 
+
+        let files: Vec<PathBuf> = fs::read_dir(&path_to_raw_data)
+            .expect("Failed to read directory")
+            .filter_map(
+                |dir| {
+                    match dir {
+                        Ok(dir) => {
+                            let path = dir.path();
+                            if path.is_file() {
+                                Some(path) // Return if this is a file 
+                            } else {
+                                None // I'm not willing to assume that the directory will only ever contain files
+                            }
+                        }
+
+                        Err(e) => {
+                            log::error!("Warning: Could not read file dir: {}", e);
+                            None
+                        }
+                    }
+                }
+            )
+            .collect(); 
+
+        files
+    }
 
     async fn download_via_http(&self) {
 
@@ -80,7 +80,10 @@ impl Author {
     async fn download_via_torrent(&self) {
         let books_to_torrent: &Vec<ViaTorrent> = &self.books_via_torrent.clone().unwrap();
         for book in books_to_torrent {
-            book.clone().download(self.set_path_to_raw_data()).await;
+            let download_path = self.set_path_to_raw_data();
+            book.download(download_path.clone()).await;
+            book.extract_files(download_path, &self.name);
+
         }    
     }
 

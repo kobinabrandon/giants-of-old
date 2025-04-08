@@ -13,6 +13,7 @@ mod sources {
     pub mod scraping;
     pub mod torrents;
     pub mod authors;
+    pub mod utils;
 }
 
 mod data_preparation{
