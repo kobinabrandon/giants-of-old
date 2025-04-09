@@ -1,6 +1,6 @@
+use std::ffi::OsStr;
 use std::fs;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::collections::HashMap;
 
 use serde_json;
@@ -11,6 +11,7 @@ use librqbit::AddTorrent;
 use librqbit::AddTorrentOptions;
 
 use crate::sources::utils;
+use crate::sources::extensions;
 
 
 #[derive(Clone)]
@@ -77,10 +78,7 @@ impl ViaTorrent {
             &mut paths_of_downloaded_files,
         );
 
-        log::info!("Logging Downloaded Files");
         log_downloaded_files(author_name, &paths_of_downloaded_files);
-
-        log::info!("Removing old directories...");
         remove_book_directories(directories);
     }
 }
@@ -91,45 +89,36 @@ fn move_files_to_destinations(
     file_paths: &Vec<PathBuf>, 
     paths_of_downloaded_files: &mut Vec<String>,
 ) {
-    let image_extensions: [&str; 2] = ["jpg", "png"];
-    let text_extensions: [&str; 6] = ["txt", "pdf", "epub", "mobi", "azw3", "opf"];
-
+    
     for file in kdam::tqdm!(file_paths.iter(), desc="Extracting text and images...") {
 
         let file_path_as_string: &str = file.to_str().expect("File path could not be rendered as a string slice");
-
-        let file_base_name: &str = get_base_name(file_path_as_string);
-        let file_is_text: bool = has_extension(&file_path_as_string.to_lowercase(), &text_extensions); 
-        let file_is_image: bool = has_extension(&file_path_as_string.to_lowercase(), &image_extensions); 
+        let file_is_text: bool = extensions::has_extension(&file_path_as_string.to_lowercase(), &extensions::FILE_EXTENSIONS); 
+        let file_is_image: bool = extensions::has_extension(&file_path_as_string.to_lowercase(), &extensions::IMAGE_EXTENSIONS); 
 
         if file_is_text {
-
-            let file_destination_directory: &PathBuf = &author_root.join(file_base_name);
+            let file_base_name_without_extension: &OsStr = &extensions::get_base_name(file_path_as_string).unwrap();
+            let destination_directory: &PathBuf = &author_root.join(file_base_name_without_extension);
             
-            if file_destination_directory.exists(){
-                let _ = fs::remove_dir(file_destination_directory);
-                log::info!("Deleted previous version of {} the directory", file_destination_directory.display());
-            } else{
-                let _ = fs::create_dir(file_destination_directory);
-            }
+            if destination_directory.exists(){
+                let _ = fs::remove_dir(destination_directory);
+                let _ = fs::create_dir(destination_directory);
+            } 
 
-            fs::rename(file_path_as_string, file_destination_directory.join(file_base_name)).unwrap();  // Move the file
+            fs::rename(file_path_as_string, destination_directory).unwrap();  // Move the file
                 
-            if file_is_text {
-                paths_of_downloaded_files.push(
-                    file_destination_directory.to_str().unwrap().to_string()
-                );
-            }
+            paths_of_downloaded_files.push(
+                destination_directory.to_str().unwrap().to_string()
+            );
+           
         } else if file_is_image {
             continue
         } else {
-            panic!(
+            log::error!(
                 "The file at {} is neither has none of the expected extensions", file.display()
             )
         }
     }
-
-
 }
 
 
@@ -138,6 +127,7 @@ fn log_downloaded_files(
     paths_of_downloaded_files: &Vec<String>, 
 ) {
 
+    log::info!("Logging Downloaded Files");
     let mut object_types_and_paths = HashMap::new();
     let author_root = utils::get_author_root(author_name); 
 
@@ -159,26 +149,15 @@ fn log_downloaded_files(
 
 fn remove_book_directories(directories: Vec<PathBuf>) {
 
-    for directory in kdam::tqdm!(directories.iter()) {
+    for directory in kdam::tqdm!(
+        directories.iter(),
+        desc="Removing original directories"
+
+    ) {
         if directory.exists() {
             fs::remove_dir_all(directory).expect("Cannot remove directory and its contents");
         }
     }
-
-}
-
-
-fn has_extension(target: &str, extensions: &[&str]) -> bool {
-    extensions.iter()
-        .any(
-            |&value| target.ends_with(value)
-        )
-}
-
-
-fn get_base_name(path: &str) -> &str {
-    let path = Path::new(path);
-    path.file_name().unwrap().to_str().unwrap()
 }
 
 
@@ -196,4 +175,3 @@ fn list_path_contents(path: &PathBuf) -> Result<Vec<Result<PathBuf, GlobError>>,
     Ok(contents)
 }
 
-   

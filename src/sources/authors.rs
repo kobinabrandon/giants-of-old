@@ -296,22 +296,22 @@ pub fn prepare_sources() -> Vec<Author> {
             ..Author::default()
         },
 
-        // Author{
-        //     name: String::from("Helena Pretrovna Blavatsky"),
-        //     biographers_and_compilers: Some(
-        //         vec!["Marion Meade".to_string(), "Gary Lachman".to_string()]
-        //     ),
-        //     books_via_torrent: Some(
-        //         vec![
-        //             ViaTorrent{
-        //                 magnet: String::from("magnet:?xt=urn:btih:7933F8B90EAC4CBCCEED1667B5E5FF0C7E5F9B29&dn=H.%20P.%20Blavatsky%20-%20Collected%20Writings%20and%20More%20%5Bepub%20mobi%20pdf%5D&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.bittor.pw%3A1337%2Fannounce&tr=udp%3A%2F%2Fpublic.popcorn-tracker.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce")
-        //             }
-        //
-        //         ]
-        //     ), 
-        //     ..Author::default()
-        // },
-        //
+        Author{
+            name: String::from("Helena Pretrovna Blavatsky"),
+            biographers_and_compilers: Some(
+                vec!["Marion Meade".to_string(), "Gary Lachman".to_string()]
+            ),
+            books_via_torrent: Some(
+                vec![
+                    ViaTorrent{
+                        magnet: String::from("magnet:?xt=urn:btih:7933F8B90EAC4CBCCEED1667B5E5FF0C7E5F9B29&dn=H.%20P.%20Blavatsky%20-%20Collected%20Writings%20and%20More%20%5Bepub%20mobi%20pdf%5D&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.bittor.pw%3A1337%2Fannounce&tr=udp%3A%2F%2Fpublic.popcorn-tracker.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce")
+                    }
+
+                ]
+            ), 
+            ..Author::default()
+        },
+
        Author{
             name: String::from("Plato"),
             books_via_torrent: Some(

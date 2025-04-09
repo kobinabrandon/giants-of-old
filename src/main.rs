@@ -9,6 +9,7 @@ mod setup {
 }
 
 mod sources {
+    pub mod extensions;
     pub mod scraping;
     pub mod torrents;
     pub mod authors;

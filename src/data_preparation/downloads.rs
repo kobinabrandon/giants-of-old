@@ -2,8 +2,8 @@
 // the Clone trait because I will be dealing with a "level 2" aggregate type that will need 
 // to implement the trait. 
 
-use crate::setup::paths::make_fundamental_directories;
 use crate::sources::authors::prepare_sources;
+use crate::setup::paths::make_fundamental_directories;
 
 
 pub async fn download_all_texts() {
