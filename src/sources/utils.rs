@@ -1,26 +1,31 @@
-use std::path::PathBuf;
-use crate::sources::authors::prepare_sources;
+use std::{fs, path::PathBuf};
 
 
-pub fn find_raw_data_for_author(author_name: String) -> PathBuf {
+pub fn get_file_paths(path: &PathBuf) -> Vec<PathBuf> {
 
-    let path = prepare_sources()
-        .iter()
-        .find(|author| author.name == author_name)
-        .map(|author| author.set_path_to_raw_data())
-        .unwrap()
-        .to_path_buf();
+    let files: Vec<PathBuf> = fs::read_dir(path)
+        .expect("Failed to read directory")
+        .filter_map(
+            |dir| {
+                match dir {
+                    Ok(dir) => {
+                        let path = dir.path();
+                        if path.is_file() {
+                            Some(path) // Return if this is a file 
+                        } else {
+                            None // I'm not willing to assume that the directory will only ever contain files
+                        }
+                    }
 
-    path
-}
+                    Err(e) => {
+                        log::error!("Warning: Could not read file dir: {}", e);
+                        None
+                    }
+                }
+            }
+        )
+        .collect(); 
 
-
-pub fn get_author_root(author_name: &str) -> PathBuf {
-    let author_root: PathBuf = find_raw_data_for_author(author_name.to_string()).parent()
-            .expect("Author path is invalid")
-            .to_path_buf();
-
-    author_root
-
+    files
 }
 

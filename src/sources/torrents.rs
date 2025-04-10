@@ -1,7 +1,6 @@
-use std::ffi::OsStr;
 use std::fs;
+use std::ffi::OsStr;
 use std::path::{PathBuf, Path};
-use std::collections::HashMap;
 
 use serde_json;
 use glob::GlobError;
@@ -10,9 +9,11 @@ use librqbit::Session;
 use librqbit::AddTorrent;
 use librqbit::AddTorrentOptions;
 
-use crate::sources::utils;
+use crate::sources::authors;
 use crate::sources::extensions;
+use crate::sources::utils::get_file_paths;
 
+pub static LOG_FILE_NAME: &str = "downloaded_files.json";
 
 #[derive(Clone)]
 #[allow(dead_code)]
@@ -36,14 +37,15 @@ impl ViaTorrent {
             Some(torrent_config)
         ).await.unwrap().into_handle().unwrap();
 
-        torrent_handle.wait_until_completed().await.unwrap()
+        torrent_handle.wait_until_completed().await.unwrap();
+        session.stop().await; // Prevents an error that warns you about the connection still being open. 
     }
 
     pub fn extract_files(&self, download_path: PathBuf, author_name: &String) {
 
         let mut file_paths: Vec<PathBuf> = Vec::new();
         let mut directories: Vec<PathBuf> = Vec::new();
-        let author_root = utils::get_author_root(&author_name);
+        let author_root = authors::get_author_root(&author_name);
 
         let path_contents: Vec<Result<PathBuf, GlobError>> = list_path_contents(&download_path).expect("Could not get contents of download path"); 
 
@@ -81,6 +83,30 @@ impl ViaTorrent {
         log_downloaded_files(author_name, &paths_of_downloaded_files);
         remove_book_directories(directories);
     }
+
+
+    pub fn must_torrent(&self, download_path: &PathBuf, author_name: &String) -> bool {
+
+        // let path_contents = list_path_contents(&download_path).expect("Could not get contents of download path"); 
+        let downloaded_paths: Vec<PathBuf> = get_file_paths(download_path);
+        let author_root: PathBuf = authors::get_author_root(author_name);
+
+        let log_file_path: PathBuf = author_root.join(LOG_FILE_NAME);
+
+        if !log_file_path.exists() {
+            true 
+        } else {
+            let log_data = fs::read_to_string(log_file_path).unwrap();
+            let logged_paths: Vec<String> = serde_json::from_str(&log_data).unwrap();
+
+            if (downloaded_paths.len() == logged_paths.len()) && logged_paths.len() > 0 {
+                log::info!("Torrenting not necessary");
+                false
+            } else {
+                true
+            } 
+        } 
+    }
 }
 
 
@@ -114,7 +140,7 @@ fn move_files_to_destinations(
         } else if file_is_image {
             continue
         } else {
-            log::error!(
+            log::warn!(
                 "The file at {} is neither has none of the expected extensions", file.display()
             )
         }
@@ -128,22 +154,15 @@ fn log_downloaded_files(
 ) {
 
     log::info!("Logging Downloaded Files");
-    let mut object_types_and_paths = HashMap::new();
-    let author_root = utils::get_author_root(author_name); 
+    let author_root = authors::get_author_root(author_name); 
+    let log_path: PathBuf = author_root.join(LOG_FILE_NAME);
 
-    object_types_and_paths.insert(
-       author_root.join("downloaded_files.json"), paths_of_downloaded_files
-    );
+    if log_path.exists() {
+        fs::remove_file(&log_path).expect("The previous file that contains the torrented files could not be removed")
+    }
 
-    for (log_path, log_content) in &object_types_and_paths {
-
-        if log_path.exists() {
-            fs::remove_file(log_path).expect("A file could not be removed")
-        }
-
-        let new_log_file = fs::File::create(log_path).unwrap();
-        serde_json::to_writer(new_log_file, log_content).expect("Problem writing json for downloads")
-    } 
+    let new_log_file = fs::File::create(log_path).unwrap();
+    serde_json::to_writer(new_log_file, paths_of_downloaded_files).expect("Problem writing json for downloads")
 }
 
 

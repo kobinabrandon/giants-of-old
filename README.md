@@ -1,4 +1,3 @@
-# GIANTS OF OLD
 I thought it'd be cool to have my own RAG pipelines for some of the most influential social figures in history. 
 
 ## MY CRITERIA FOR SELECTING AUTHORS: 
