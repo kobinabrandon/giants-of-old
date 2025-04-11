@@ -15,11 +15,13 @@ use crate::sources::utils::get_file_paths;
 
 pub static LOG_FILE_NAME: &str = "downloaded_files.json";
 
+
 #[derive(Clone)]
 #[allow(dead_code)]
 pub struct ViaTorrent {
     pub magnet: String 
 }
+
 
 impl ViaTorrent {
     
@@ -87,10 +89,8 @@ impl ViaTorrent {
 
     pub fn must_torrent(&self, download_path: &PathBuf, author_name: &String) -> bool {
 
-        // let path_contents = list_path_contents(&download_path).expect("Could not get contents of download path"); 
         let downloaded_paths: Vec<PathBuf> = get_file_paths(download_path);
         let author_root: PathBuf = authors::get_author_root(author_name);
-
         let log_file_path: PathBuf = author_root.join(LOG_FILE_NAME);
 
         if !log_file_path.exists() {
@@ -98,13 +98,7 @@ impl ViaTorrent {
         } else {
             let log_data = fs::read_to_string(log_file_path).unwrap();
             let logged_paths: Vec<String> = serde_json::from_str(&log_data).unwrap();
-
-            if (downloaded_paths.len() == logged_paths.len()) && logged_paths.len() > 0 {
-                log::info!("Torrenting not necessary");
-                false
-            } else {
-                true
-            } 
+            if (downloaded_paths.len() == logged_paths.len()) && logged_paths.len() > 0 {false} else {true} 
         } 
     }
 }

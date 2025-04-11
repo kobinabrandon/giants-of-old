@@ -63,9 +63,11 @@ impl ViaScraper <'_> {
     fn truncate<'a, 'b, 'out>(&'a self, full_text: &'b String) -> Option<&'out str> 
         where 'a: 'out, 'b: 'out 
     {
+        // println!("INITIAL {}", full_text.rfind(self.initial_marker.unwrap()).unwrap());
+        // println!("TERMINAL {}",full_text.rfind(self.terminal_marker.unwrap()).unwrap());
+
         let start_index: usize = full_text.rfind(self.initial_marker.unwrap()).unwrap();
         let terminal_index: usize = full_text.rfind(self.terminal_marker.unwrap()).unwrap();
-
         Some(&full_text[start_index..terminal_index])
     }
 

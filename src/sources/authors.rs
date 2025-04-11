@@ -8,25 +8,15 @@ use crate::sources::torrents::ViaTorrent;
 
 
 pub fn get_author_root(author_name: &str) -> PathBuf {
-    let author_root: PathBuf = find_raw_data_for_author(author_name.to_string()).parent()
-            .expect("Author path is invalid")
-            .to_path_buf();
 
-    author_root
+    let author_data_root = Directories::get().data.join(author_name);
+    if !author_data_root.exists() {
+        _ = fs::create_dir(&author_data_root);
+    }
+
+    author_data_root
 }
 
-
-pub fn find_raw_data_for_author(author_name: String) -> PathBuf {
-
-    let path = prepare_sources()
-        .iter()
-        .find(|author| author.name == author_name)
-        .map(|author| author.set_path_to_raw_data())
-        .unwrap()
-        .to_path_buf();
-
-    path
-}
 
 
 #[derive(Default)]
@@ -42,12 +32,6 @@ pub struct Author <'a> {
 
 impl Author <'_>{
 
-    pub fn set_path_to_raw_data(&self) -> PathBuf {
-        let author_data_root = Directories::get().data.join(&self.name);
-        _ = fs::create_dir(&author_data_root);
-        author_data_root.join("raw")
-    } 
-
     async fn download_via_http(&self) {
 
         let http_books: Vec<ViaHTTP> = self.books_via_http.clone().unwrap();
@@ -56,7 +40,6 @@ impl Author <'_>{
             let file_name: String = book.get_file_name();
             let author_root: PathBuf = get_author_root(&self.name); 
             let file_path = author_root.join(file_name);
-            _ = fs::create_dir(&author_root);
             book.clone().download(&file_path).await;
         }    
     }
@@ -76,9 +59,10 @@ impl Author <'_>{
             let download_path: PathBuf = get_author_root(&self.name);
 
             if book.must_torrent(&download_path, &self.name) {
+                log::info!("Torrenting neccessary for {}", &self.name);
                 book.download(download_path.clone()).await;
                 book.extract_files(download_path, &self.name);
-            }
+            } 
         }    
     }
 
@@ -401,8 +385,8 @@ pub fn prepare_sources() -> Vec<Author<'static>> {
                     ViaScraper{
                         title: String::from("The Reign of Greed"),
                         url: String::from("https://www.gutenberg.org/files/10676/10676-h/10676-h.htm"),
-                        initial_marker: Some("On the Upper Deck"),
-                        terminal_marker: Some("Colophon"),
+                        initial_marker: Some("One morning in December"),
+                        terminal_marker: Some("country folk"),
                         ..ViaScraper::default() 
                     },
 
